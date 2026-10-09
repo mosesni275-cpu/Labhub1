@@ -1,0 +1,35 @@
+name: Build LabHub 42F APK
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Build APK
+        run: |
+          mkdir -p app/www app/assets
+          cp labhub42f.html app/www/index.html
+          cp labhub42f-icon.png app/assets/icon-only.png
+          cd app
+          npm init -y
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/share@6 @capacitor/assets
+          npx cap init LabHub ge.gtu.labhub42f --web-dir www
+          npx cap add android
+          npx capacitor-assets generate --android --iconBackgroundColor '#713ff8'
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: labhub42f-apk
+          path: app/android/app/build/outputs/apk/debug/app-debug.apk
